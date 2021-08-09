@@ -36,7 +36,6 @@
 #define PIN_DATA_OUTBUF_CLK PD0 //Data out buffer clock
 #define PIN_ADDR_BUFF_ENABLE PD1
 #define PIN_TRIGGER_OPERATION PD2
-#define PIN_CLEAR_PAUSE PD3
 #define PIN_DATA_SDP_OVVRD_ENABLE PD4
 #define PIN_DATA_BUFF_ENABLE PD5
 #define PIN_WRITE_LIGHT PD6
@@ -108,7 +107,6 @@ int main(){
 	DDRD |= 1 << PIN_DATA_OUTBUF_CLK; //D0
 	DDRD |= 1 << PIN_ADDR_BUFF_ENABLE; //D1
 	DDRD |= 0 << PIN_TRIGGER_OPERATION; //D2
-	DDRD |= 0 << PIN_CLEAR_PAUSE; //D3
 	DDRD |= 1 << PIN_DATA_SDP_OVVRD_ENABLE; //D4
 	DDRD |= 1 << PIN_DATA_BUFF_ENABLE; //D5
 	DDRD |= 1 << PIN_WRITE_LIGHT; //D6
@@ -139,7 +137,6 @@ int main(){
 	PORTD |= 0 << PIN_DATA_OUTBUF_CLK; //D0
 	PORTD |= 1 << PIN_ADDR_BUFF_ENABLE; //D1
 	PORTD |= 1 << PIN_TRIGGER_OPERATION; //D2
-	PORTD |= 0 << PIN_CLEAR_PAUSE; //D3
 	PORTD |= 1 << PIN_DATA_SDP_OVVRD_ENABLE; //D4
 	PORTD |= 1 << PIN_DATA_BUFF_ENABLE; //D5
 	PORTD |= 0 << PIN_WRITE_LIGHT; //D6
@@ -241,14 +238,6 @@ void read_byte(){
 	//Operation 4
 	PORTD |= (1 << PIN_DATA_OUTBUF_CLK); //Turn DATA_TO_BUS_ENABLE -> HIGH (ON)
 	PORTD &= ~(1 << PIN_DATA_OUTBUF_CLK); //Turn DATA_TO_BUS_ENABLE -> LOW (OFF)
-
-	//Operation 5
-	//Continuously scans PIN_CLEAR_PAUSE, passes when low
-	while (TRUE){
-		if ((~PIND & (1 << PIN_CLEAR_PAUSE))){
-			break;
-		}
-	}
 
 	//Operation 7
 	PORTC |= 1 << PIN_OUTPUT_ENABLE; //Turn OUTPUT_ENABLE -> HIGH (OFF)
