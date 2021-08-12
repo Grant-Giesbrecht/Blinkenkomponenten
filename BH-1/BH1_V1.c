@@ -135,6 +135,8 @@ unsigned long millis()
 #define LO2_FREQ 7e9 //Speed of secondary local oscillator
 #define DIVN_MAX_RATIO 1.04858e6 //Max division ratio of divide by N
 
+#define DISP_BUFF_SIZE 3
+
 //************************** CONFIGURATION OPTIONS ***************************//
 
 #define PERMITTED_MAX_F 4e6 //Maximum frequency BH allowed to generate (must be equal or less than LO_FREQ)
@@ -162,7 +164,8 @@ void updateDivN(long int N);
 void binArray( unsigned long int n ,int* array, unsigned int numBits);
 uint16_t readADC();
 float dialToFrequency(float dial_value);
-void displayFrequency(float f);
+void displayFrequency(float f, char* buffer);
+void shiftDataOut(char* buffer, long int buf_size, int reverse=FALSE);
 
 typedef struct{
 	long int N; //Divisor start/ program value
@@ -196,6 +199,8 @@ int main(){
 	int opt_force_50dc;
 	int opt_nohyst;
 	int opt_slowdisp;
+
+	char displayBuffer[DISP_BUFF_SIZE];
 
 	float fLast = -1;
 
@@ -267,18 +272,37 @@ int main(){
 	unsigned long last_update_time = millis();
 	float f_displayed = -1;
 
+	double count = 100;
+
 	while (TRUE){
 
+		last_update_time = millis();
+
+		main_sf.f = count * 10;
+
 		//Get updated values from the controls
-		readControls(&manual_mode, &xN__mode, &dial_value, &preset_mode, &lock_f, &opt_force_50dc, &opt_nohyst, &opt_slowdisp);
+		// readControls(&manual_mode, &xN__mode, &dial_value, &preset_mode, &lock_f, &opt_force_50dc, &opt_nohyst, &opt_slowdisp);
 
 		//Update Divide-by-N Circuit if big enough change
-		InterpretControls(manual_mode, xN__mode, dial_value, preset_mode, fLast, lock_f, opt_force_50dc, opt_nohyst, opt_slowdisp);
+		// InterpretControls(manual_mode, xN__mode, dial_value, preset_mode, fLast, lock_f, opt_force_50dc, opt_nohyst, opt_slowdisp);
 
 		// if (millis() - last_update_time > DISP_UPDATE_T && f_displayed != main_sf.f){
 		// 	f_displayed = main_sf.f;
-			displayFrequency(main_sf.f);
+		// displayFrequency(main_sf.f, displayBuffer);
 		// }
+
+		PORTB |=  (1 << PIN_LOCK_IND); //Uploading light ON
+
+		while ( millis() - last_update_time < 1e3){
+			continue;
+		}
+
+		PORTB &=  ~(1 << PIN_LOCK_IND); //Uploading light ON
+
+		while ( millis() - last_update_time < 2e3){
+			continue;
+		}
+
 	}
 
 }
@@ -830,10 +854,13 @@ void calcDutyCycle(synth_freq* sf){
 
 }
 
-void displayFrequency(float f){
+void displayFrequency(float f, char* buffer){
 
 	float range = 1;
 
+	signed int dp_idx = -1;
+
+	// Check which frequency units to use
 	if (f > 1e6){
 		range = 1e6;
 		PORTB &= ~(1 << PIN_KHZ_IND); // OFF
@@ -842,12 +869,82 @@ void displayFrequency(float f){
 		range = 1e3;
 		PORTB &= ~(1 << PIN_MHZ_IND); // OFF
 		PORTB |= 1 << PIN_KHZ_IND; // ON
+
 	}else{
 		PORTB &= ~(1 << PIN_KHZ_IND); // OFF
 		PORTB &= ~(1 << PIN_MHZ_IND); // OFF
 	}
 
+	// Check how many decimal places fit
+	if (f/range < 10){
+		dp_idx = 2;
+	}else if (f/range < 100){
+		dp_idx = 1;
+	}else{
+		dp_idx = 0;
+	}
+
+	// Populate display buffer
+	fto7a(buffer, DISP_BUFF_SIZE, f/range, dp_idx);
+
+	// Send display data to shift registers on CIP-1
+	shiftDataOut(buffer, DISP_BUFF_SIZE);
+
 }
 
-//------------------------------------------------------------------------------
-// Should be in display.h but it is DETERMINED not to work if outside of main file!
+void shiftDataOut(char* buffer, long int buf_size, int reverse){
+
+		#define PIN_DISP_DCLK PD3
+		#define PIN_DATA PB2
+		#define PIN_RCLK PD6
+
+		PORTD &= ~(1 << PIN_DCLK); //, Set LOW
+
+		if (reverse == FALSE){
+
+			//Scan over each byte (letter on display)
+			for (long int i = 0; i < buf_size; i++){
+
+				//Scan over each bit (segment on letter)
+				for (long int b = 0; b < 8 ; b++){
+
+					// Check if segment is set
+					if (buffer[i] & (1 << b)){ //Set
+						PORTB |= (1 << PIN_DATA);
+					}else{ //Unset
+						PORTB &= ~(1 << PIN_DATA);
+					}
+
+					PORTD |= (1 << PIN_DCLK); //Clock high
+					PORTD &= ~(1 << PIN_DCLK); // Clock low
+
+				}
+
+			}
+
+		}else{
+
+			//Scan over each byte (letter on display)
+			for (long signed int i = buf_size-1; i >= 0; i--){
+
+				//Scan over each bit (segment on letter)
+				for (long int b = 0; b < 8 ; b++){
+
+					// Check if segment is set
+					if (buffer[i] & (1 << b)){ //Set
+						PORTB |= (1 << PIN_DATA);
+					}else{ //Unset
+						PORTB &= ~(1 << PIN_DATA);
+					}
+
+					PORTD |= (1 << PIN_DCLK); //Clock high
+					PORTD &= ~(1 << PIN_DCLK); // Clock low
+
+				}
+
+			}
+
+		}
+
+
+}
