@@ -1,3 +1,6 @@
+#include <string.h>
+#include <stdlib.h>
+
 /*
 Functions to aide in drivind seven segment displays.
 
@@ -32,7 +35,7 @@ uint8_t sto7(char* insegs){
 	uint8_t x = 0b11111111;
 
 	//For each character in the input list, activate the specified segment
-	for (size_t i = 0 ; i < strlen(insegs); i++){
+	for (long int i = 0 ; i < strlen(insegs); i++){
 		if (insegs[i] == 'A'){
 			x &= ~(1 << 5);
 		}else if (insegs[i] == 'B'){
@@ -103,7 +106,7 @@ uint8_t ito7(uint8_t x, int dp){
 	}
 
 	if (dp == 1){
-		strncat(s, "P", 1)
+		strncat(s, "P", 1);
 	}
 
 	return sto7(s);
@@ -123,22 +126,23 @@ ARGUMENTS:
 	dp_idx - Index at which to place decimal point. Make negative to surpress
 		decimal point.
 */
-bool fto7a(char* out_buf, size_t buf_size, float inval, signed int dp_idx){
+bool fto7a(char* out_buf, long int buf_size, float inval, signed int dp_idx){
 
 	//Convert to an integer, scaled up by 10^(dp) so correct no. decimals are kept
-	int x = (int)(inval * pow(10, dp))
+	int x = (int)(inval * pow(10, dp_idx));
 
 	int has_dp;
 
 	//Loop through each cell of output buffer
-	for (size_t i = 0 ; i+1 < buf_size ; i++){
+	for (long int i = 0 ; i+1 < buf_size ; i++){
 
 		//Determine if decimal point belongs at current index
 		has_dp = (dp_idx == (buf_size - 1 - i));
 
 		//Populate output register
-		out_buf[i] = ito7( (x/pow(10, buf_size-i-1) )%10, has_dp );
+		out_buf[i] = ito7( fmod((x/pow(10, buf_size-i-1) ), 10), has_dp );
 
 	}
 
+	return true;
 }
