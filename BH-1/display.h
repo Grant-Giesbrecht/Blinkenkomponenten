@@ -32,26 +32,47 @@ decimal point.
 */
 uint8_t sto7(char* insegs){
 
-	uint8_t x = 0b11111111;
+	uint8_t x = 0b00000000;
+
+	// //For each character in the input list, activate the specified segment
+	// for (long int i = 0 ; i < strlen(insegs); i++){
+	// 	if (insegs[i] == 'A'){
+	// 		x &= ~(1 << 5);
+	// 	}else if (insegs[i] == 'B'){
+	// 		x &= ~(1 << 0);
+	// 	}else if (insegs[i] == 'C'){
+	// 		x &= ~(1 << 1);
+	// 	}else if (insegs[i] == 'D'){
+	// 		x &= ~(1 << 2);
+	// 	}else if (insegs[i] == 'E'){
+	// 		x &= ~(1 << 3);
+	// 	}else if (insegs[i] == 'F'){
+	// 		x &= ~(1 << 4);
+	// 	}else if (insegs[i] == 'G'){
+	// 		x &= ~(1 << 6);
+	// 	}else if (insegs[i] == 'P'){
+	// 		x &= ~(1 << 7);
+	// 	}
+	// }
 
 	//For each character in the input list, activate the specified segment
 	for (long int i = 0 ; i < strlen(insegs); i++){
 		if (insegs[i] == 'A'){
-			x &= ~(1 << 5);
+			x |= (1 << 7);
 		}else if (insegs[i] == 'B'){
-			x &= ~(1 << 0);
+			x |= (1 << 6);
 		}else if (insegs[i] == 'C'){
-			x &= ~(1 << 1);
+			x |= (1 << 5);
 		}else if (insegs[i] == 'D'){
-			x &= ~(1 << 2);
+			x |= (1 << 4);
 		}else if (insegs[i] == 'E'){
-			x &= ~(1 << 3);
+			x |= (1 << 3);
 		}else if (insegs[i] == 'F'){
-			x &= ~(1 << 4);
+			x |= (1 << 2);
 		}else if (insegs[i] == 'G'){
-			x &= ~(1 << 6);
+			x |= (1 << 1);
 		}else if (insegs[i] == 'P'){
-			x &= ~(1 << 7);
+			x |= (1 << 0);
 		}
 	}
 
@@ -74,34 +95,34 @@ uint8_t ito7(uint8_t x, int dp){
 		strcpy(s, "ABCDEF");
 		break;
 	  case(1):
-		strcpy(s, "CD");
+		strcpy(s, "BC");
 		break;
 	  case(2):
-		strcpy(s, "BCEFG");
+		strcpy(s, "ABGED");
 		break;
 	  case(3):
-		strcpy(s, "BCDEG");
+		strcpy(s, "ABGCD");
 		break;
 	  case(4):
-		strcpy(s, "ACDG");
+		strcpy(s, "FBGC");
 		break;
 	  case(5):
-		strcpy(s, "ABDEG");
+		strcpy(s, "AFGCD");
 		break;
 	  case(6):
-		strcpy(s, "ABDEFG");
+		strcpy(s, "AFGECD");
 		break;
 	  case(7):
-		strcpy(s, "BCD");
+		strcpy(s, "ABC");
 		break;
 	  case(8):
 		strcpy(s, "ABCDEFG");
 		break;
 	  case(9):
-		strcpy(s, "ABCDG");
+		strcpy(s, "ABFGCD");
 		break;
 	  default:
-		strcpy(s, "ABEFG"); //'E'
+		strcpy(s, "AFGED"); //'E'
 		break;
 	}
 
@@ -124,23 +145,24 @@ ARGUMENTS:
 	buf_size - length of 'out_buf'
 	inval - Float value to convert to 7-segment display code
 	dp_idx - Index at which to place decimal point. Make negative to surpress
-		decimal point.
+		decimal point. Make 0 to show zero decimal places, 1 for 1, and so on
 */
-bool fto7a(char* out_buf, long int buf_size, float inval, signed int dp_idx){
+bool fto7a(uint8_t* out_buf, long int buf_size, float inval, signed int dp_idx){
 
 	//Convert to an integer, scaled up by 10^(dp) so correct no. decimals are kept
-	int x = (int)(inval * pow(10, dp_idx));
+	int x = (int)round(inval * pow(10, dp_idx));
 
 	int has_dp;
 
 	//Loop through each cell of output buffer
-	for (long int i = 0 ; i+1 < buf_size ; i++){
+	for (long int i = 0 ; i < buf_size ; i++){
 
 		//Determine if decimal point belongs at current index
 		has_dp = (dp_idx == (buf_size - 1 - i));
 
 		//Populate output register
-		out_buf[i] = ito7( fmod((x/pow(10, buf_size-i-1) ), 10), has_dp );
+		// out_buf[i] = ito7( int(round(x/pow(10, buf_size-i-1)))%10, has_dp );
+		out_buf[i] = ito7( int(floor(x/pow(10, buf_size-i-1)))%10, has_dp );
 
 	}
 

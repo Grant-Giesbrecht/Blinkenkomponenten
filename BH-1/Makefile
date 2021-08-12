@@ -1,4 +1,4 @@
-FILE = BH1_V1
+FILE = simple
 
 all: $(FILE).hex
 	avrdude -C /usr/local/Cellar/avrdude/6.3_1/etc/avrdude.conf -c usbtiny -p m328p -U flash:w:$(FILE).hex
