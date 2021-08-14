@@ -734,9 +734,9 @@ void InterpretControls(ctrl_state& ctrl, synth_freq& sf){
 
 		//Select state of duty cycle corrector MUX
 		if (sf.en50DC == 1){
-			DDRB |= 1 << PIN_DC_CORRECTOR; //B7, enable DC corrector
+			PORTB |= 1 << PIN_DC_CORRECTOR; //B7, enable DC corrector
 		}else{
-			DDRB &= ~(1 << PIN_DC_CORRECTOR); //B7, disable DC Corrector
+			PORTB &= ~(1 << PIN_DC_CORRECTOR); //B7, disable DC Corrector
 		}
 
 
