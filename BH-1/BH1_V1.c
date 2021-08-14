@@ -703,7 +703,7 @@ void InterpretControls(ctrl_state& ctrl, synth_freq& sf){
 	}
 
 	//Update divide by N counter if past hysteresis bounds
-	if (TRUE || ( ctrl.opt_nohyst || local_sf.f > hystMax || local_sf.f < hystMin) && (ctrl.lock_f == 0)){
+	if (( ctrl.opt_nohyst || local_sf.f > hystMax || local_sf.f < hystMin) && (ctrl.lock_f == 0)){
 
 		sf = local_sf;
 
@@ -736,7 +736,7 @@ void InterpretControls(ctrl_state& ctrl, synth_freq& sf){
 
 
 		// updateDivN(round(1048576 - 4e6/main_sf.f/2));
-		ctrl.last_freq = freq_requested;
+		ctrl.last_freq = local_sf.f;
 	}
 
 }
