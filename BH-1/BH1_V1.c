@@ -534,6 +534,11 @@ float DivisorToFrequency(synth_freq* sf){
 
 void calcDutyCycle(synth_freq* sf){
 
+	if (sf->bypass_divn){
+		sf->dc = 50;
+		return;
+	}
+
 	//Check if 50% duty cycle circuit is on
 	if (sf->en50DC){
 		sf->dc = 50;
@@ -567,6 +572,11 @@ void getClosestFrequency(synth_freq* sf, int opt_force_50dc){
 	all_sf[1].osc_idx = 0;
 	all_sf[1].bypass_divn = FALSE;
 
+	// LO=PRIME, DC=?, BYPASS=TRUE
+	all_sf[4].en50DC = FALSE;
+	all_sf[4].osc_idx = 0;
+	all_sf[4].bypass_divn = TRUE;
+
 	// LO=SECOND, DC=50%, BYPASS=FALSE
 	all_sf[2].en50DC = TRUE;
 	all_sf[2].osc_idx = ENABLE_ALT_OSC;
@@ -576,11 +586,6 @@ void getClosestFrequency(synth_freq* sf, int opt_force_50dc){
 	all_sf[3].en50DC = FALSE;
 	all_sf[3].osc_idx = ENABLE_ALT_OSC;
 	all_sf[3].bypass_divn = FALSE;
-
-	// LO=PRIME, DC=?, BYPASS=TRUE
-	all_sf[4].en50DC = FALSE;
-	all_sf[4].osc_idx = 0;
-	all_sf[4].bypass_divn = TRUE;
 
 	// LO=SECOND, DC=?, BYPASS=TRUE
 	all_sf[5].en50DC = FALSE;
