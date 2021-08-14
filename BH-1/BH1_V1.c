@@ -149,7 +149,8 @@ unsigned long millis()
 #define XN_MULTIPLIER 18 //Amount by which to increase clock speed when xN on and Continous mode
 #define HYST_FACTOR .05 // %/100 by which exponent of freq can change without forcing an update
 #define PERMITTED_MIN_DC 10 //Minimum duty cycle allowed in normal operation (%)
-#define DISP_UPDATE_T 200 //Amount of time that must ellapse before the readbout is updated (mS)
+#define DISP_UPDATE_T 50 //Amount of time that must ellapse before the readout is updated (mS)
+#define DISP_UPDATE_T_SLOW 1e3 //Amount of time that must ellapse before the readout is updated (mS)
 
 #define PRESET1_ALPHA 6
 #define PRESET1_BETA 1e3
@@ -180,6 +181,8 @@ typedef struct{
 	int opt_nohyst;
 	int opt_slowdisp;
 	float last_freq;
+
+	float time_disp_update;
 }ctrl_state;
 
 void readControls(ctrl_state& ctrl);
@@ -225,6 +228,11 @@ int main(){
 	ctrl.last_freq = -1;
 
 
+	//Settings for timer
+	TCNT0 = 0;
+	TCCR0B |= (0<<CS02) | (1<<CS01) | (1<<CS00);
+	TIMSK0 = (1<<TOIE0);
+	sei();
 
 	//******** SET DATA DIRECTION BITS
 
@@ -297,9 +305,6 @@ int main(){
 
 	while (TRUE){
 
-		last_update_time = millis();
-
-
 		// Get updated values from the controls
 		readControls(ctrl);
 
@@ -308,20 +313,23 @@ int main(){
 
 		// sendFreqToHardware();
 
-		if ( TRUE || millis() - last_update_time > DISP_UPDATE_T){// && f_displayed != main_sf.f){
+		if ( millis() - last_update_time >= ctrl.time_disp_update){// && f_displayed != main_sf.f){
 
-			// ************* THE NUMBER HERE WILL BE DISPLAYED CORRECTLY ******* DEBUG
-			// displayFrequency(12.3e3, displayBuffer);
-			if (ctrl.lock_f){
-				displayFrequency(main_sf.f, displayBuffer); //DEBUG OPTION
-			}else{
-				displayFrequency(main_sf.N, displayBuffer); //DEBUG OPTION
-			}
-			// displayFrequency(main_sf.f, displayBuffer);
+			// ************* THE NUMBER HERE WILL BE DISPLAYED CORRECTLY ******
 
-			// ************* THE NUMBER HERE WILL BE DISPLAYED CORRECTLY *******
+			//DEBUG OPTION: Can enable this block to print alternate parameters
+			// if (ctrl.lock_f){
+			// 	displayFrequency(main_sf.f, displayBuffer);
+			// }else{
+			// 	displayFrequency(main_sf.N, displayBuffer);
+			// }
+			// displayFrequency(millis() - last_update_time, displayBuffer);
+
+			displayFrequency(main_sf.f, displayBuffer);
 
 			f_displayed = main_sf.f;
+
+			last_update_time = millis();
 		}
 
 
@@ -379,13 +387,15 @@ void readControls(ctrl_state& ctrl){
 	//Read force slow display update option
 	if (PIND & (1 << PIN_SLOWDISP)){
 		ctrl.opt_slowdisp = 1;
+		ctrl.time_disp_update = DISP_UPDATE_T_SLOW;
 	}else{
 		ctrl.opt_slowdisp = 0;
+		ctrl.time_disp_update = DISP_UPDATE_T;
 	}
 
 	//************************* READ ANALOG CONTROLS *************************//
 
-		// ************** READ FREQUENCY DIAL CONTROL ************* //
+	// ************** READ FREQUENCY DIAL CONTROL ************* //
 
 	//Read Frequency Dial Control
 	//
@@ -397,37 +407,15 @@ void readControls(ctrl_state& ctrl){
 	float f_dial_adc = (float)f_dial_adc_raw;
 
 	ctrl.dial_value = f_dial_adc;
-	// f_dial_adc = float(100);
-
-	// f_dial_adc = 500;
-	// *dial_value = f_dial_adc*800.0;
-	// *dial_value = 400e3;
-
-	// *dial_value = 1e3;
 
 
-
-		// ****************** READ PRESETS CONTROL **************** //
-
-	// ADMUX &= 0b11110000; ADMUX |= (1 << MUX1); //Set ADC to read PC1 (Preset selector)
-	// uint16_t preset_selector_adc = readADC(); //Read value from ADC
-	//
-	// //Check preset setting
-	// if (preset_selector_adc < 512){
-	// 	ctrl.preset = FALSE;
-	// 	PORTD &= ~(1 << PIN_ERROR); //, Set LOW
-	// }else{
-	// 	ctrl.preset = TRUE;
-	// 	PORTD |= (1 << PIN_ERROR); //, Set LOW
-	// }
+	// ****************** READ PRESETS CONTROL **************** //
 
 	//Check preset setting
 	if (PINC & (1 << PIN_PRESET_CTRL) ){
 		ctrl.preset = TRUE;
-		PORTD |= (1 << PIN_ERROR); //, Set LOW
 	}else{
 		ctrl.preset = FALSE;
-		PORTD &= ~(1 << PIN_ERROR); //, Set LOW
 	}
 
 }
