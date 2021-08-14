@@ -148,6 +148,7 @@ unsigned long millis()
 
 #define XN_MULTIPLIER 18 //Amount by which to increase clock speed when xN on and Continous mode
 #define HYST_FACTOR .05 // %/100 by which exponent of freq can change without forcing an update
+#define HYST_FACTOR_SIMPLE .03 // %%/100 by which freq can change without forcing update (if using simple hysteresis mode)
 #define PERMITTED_MIN_DC 10 //Minimum duty cycle allowed in normal operation (%)
 #define DISP_UPDATE_T 50 //Amount of time that must ellapse before the readout is updated (mS)
 #define DISP_UPDATE_T_SLOW 1e3 //Amount of time that must ellapse before the readout is updated (mS)
@@ -697,9 +698,13 @@ void InterpretControls(ctrl_state& ctrl, synth_freq& sf){
 		hystMax = -1;
 		hystMin = -1;
 	}else{
-		fLast_exp = log10(ctrl.last_freq/float(XN_MULTIPLIER)); //Exponent (ie. linear with raw dial value)
-		hystMin = pow(10, fLast_exp*(1-float(HYST_FACTOR)))*float(XN_MULTIPLIER); //Min freq
-		hystMax = pow(10, fLast_exp*(1+float(HYST_FACTOR)))*float(XN_MULTIPLIER); //Max freq
+
+		hystMin = ctrl.last_freq * 1.0 - HYST_FACTOR_SIMPLE;
+		hystMax = ctrl.last_freq * 1.0 + HYST_FACTOR_SIMPLE;
+
+		// fLast_exp = log10(ctrl.last_freq/float(XN_MULTIPLIER)); //Exponent (ie. linear with raw dial value)
+		// hystMin = pow(10, fLast_exp*(1-float(HYST_FACTOR)))*float(XN_MULTIPLIER); //Min freq
+		// hystMax = pow(10, fLast_exp*(1+float(HYST_FACTOR)))*float(XN_MULTIPLIER); //Max freq
 	}
 
 	//Update divide by N counter if past hysteresis bounds
