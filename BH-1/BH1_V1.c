@@ -409,14 +409,25 @@ void readControls(ctrl_state& ctrl){
 
 		// ****************** READ PRESETS CONTROL **************** //
 
-	ADMUX &= 0b11110000; ADMUX |= (1 << MUX1); //Set ADC to read PC1 (Preset selector)
-	uint16_t preset_selector_adc = readADC(); //Read value from ADC
+	// ADMUX &= 0b11110000; ADMUX |= (1 << MUX1); //Set ADC to read PC1 (Preset selector)
+	// uint16_t preset_selector_adc = readADC(); //Read value from ADC
+	//
+	// //Check preset setting
+	// if (preset_selector_adc < 512){
+	// 	ctrl.preset = FALSE;
+	// 	PORTD &= ~(1 << PIN_ERROR); //, Set LOW
+	// }else{
+	// 	ctrl.preset = TRUE;
+	// 	PORTD |= (1 << PIN_ERROR); //, Set LOW
+	// }
 
 	//Check preset setting
-	if (preset_selector_adc < 512){
-		ctrl.preset = FALSE;
-	}else{
+	if (PINC & (1 << PIN_PRESET_CTRL) ){
 		ctrl.preset = TRUE;
+		PORTD |= (1 << PIN_ERROR); //, Set LOW
+	}else{
+		ctrl.preset = FALSE;
+		PORTD &= ~(1 << PIN_ERROR); //, Set LOW
 	}
 
 }
