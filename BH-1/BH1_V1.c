@@ -134,6 +134,9 @@ unsigned long millis()
 
 #define LO_FREQ 4e6 //Speed of local oscillator
 #define LO2_FREQ 7e9 //Speed of secondary local oscillator
+
+#define ENABLE_ALT_OSC 0
+
 #define DIVN_MAX_RATIO 1.04858e6 //Max division ratio of divide by N
 
 #define DISP_BUFF_SIZE 3
@@ -566,12 +569,12 @@ void getClosestFrequency(synth_freq* sf, int opt_force_50dc){
 
 	// LO=SECOND, DC=50%, BYPASS=FALSE
 	all_sf[2].en50DC = TRUE;
-	all_sf[2].osc_idx = 1;
+	all_sf[2].osc_idx = ENABLE_ALT_OSC;
 	all_sf[2].bypass_divn = FALSE;
 
 	// LO=SECOND, DC=?, BYPASS=FALSE
 	all_sf[3].en50DC = FALSE;
-	all_sf[3].osc_idx = 1;
+	all_sf[3].osc_idx = ENABLE_ALT_OSC;
 	all_sf[3].bypass_divn = FALSE;
 
 	// LO=PRIME, DC=?, BYPASS=TRUE
@@ -581,7 +584,7 @@ void getClosestFrequency(synth_freq* sf, int opt_force_50dc){
 
 	// LO=SECOND, DC=?, BYPASS=TRUE
 	all_sf[5].en50DC = FALSE;
-	all_sf[5].osc_idx = 1;
+	all_sf[5].osc_idx = ENABLE_ALT_OSC;
 	all_sf[5].bypass_divn = TRUE;
 
 	//****************** GLOABL OPERATIONS ************************************
