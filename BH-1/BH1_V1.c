@@ -629,7 +629,7 @@ void getClosestFrequency(synth_freq* sf, int opt_force_50dc){
 		if (all_sf[si].dc < min_dc) continue;
 
 		// Check if struct beats current best
-		if (all_sf[si].delta < best.delta){
+		if (all_sf[si].delta < best.delta ||( all_sf[si].delta == best.delta && all_sf[si].dc > best.dc)){
 			best = all_sf[si];
 		}
 
